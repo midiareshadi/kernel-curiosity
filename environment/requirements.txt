@@ -1,0 +1,10 @@
+# Core: kernels and benchmarks
+torch>=2.4
+triton>=3.0
+
+# Figures
+matplotlib>=3.8
+pandas>=2.0
+
+# NVIDIA profiling is done with Nsight Compute (ncu), installed with the CUDA
+# toolkit, not via pip. AMD profiling uses rocprof / rocprof-compute from ROCm.

@@ -1,0 +1,6 @@
+impl,dtype,M,N,ms,gbps,pct_peak
+gridstride,fp16,1024,1024,0.07066,59.4,25.8
+gridstride,fp16,2048,2048,0.06861,244.5,106.3
+gridstride,fp16,4096,4096,0.3927,170.9,74.3
+gridstride,fp16,8192,2048,0.31334,214.2,93.1
+gridstride,fp16,16384,1024,0.32819,204.5,88.9
