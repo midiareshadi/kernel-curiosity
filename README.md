@@ -17,7 +17,7 @@ This repository is built incrementally. Early stages focus on correctness and cl
 
 ---
 
-## Featured study: how close to peak is a simple softmax?
+## Study #1: how close to peak is a simple softmax?
 
 The first full investigation in this repo. Softmax is memory-bound, so the
 question is what fraction of memory bandwidth it actually reaches. Testing a
@@ -36,6 +36,23 @@ on two GPUs turned up more about *measurement* than about kernels:
 
 Details, kernels, and reproducible benchmarks: [`kernels/softmax/`](kernels/softmax/).
 Full write-up: [How close to peak is a simple softmax? Two GPUs, one measurement trap](https://midiareshadi.github.io/blog/softmax-cache-mirage/).
+
+## Study #2: a cliff below the cache
+
+A follow-up to the softmax work. On the L4, the bandwidth cliff arrives at about
+27 MB of input, below the 48 MB cache. Why so early?
+
+- My first guess was multi-pass reuse: softmax reads each row about twice, so
+  maybe the tensor must stay resident across both passes. A controlled experiment
+  (1-, 2-, and 3-pass kernels) disproved it. Re-reading one small row costs almost
+  no extra time, because it stays in cache between reads; the PTX confirmed the
+  reads were real, not removed by the compiler.
+- The real cause is that **input and output share the cache**. A read-only kernel
+  (which writes almost nothing) cliffs at about 55 MB, almost exactly double,
+  proving the output was taking half the cache all along.
+
+Kernels and sweep: [`kernels/cache-cliff/`](kernels/cache-cliff/).
+Full write-up: [A cliff below the cache](https://midiareshadi.github.io/blog/cache-cliff/).
 
 ---
 
@@ -58,10 +75,14 @@ kernel-curiosity/
 - README.md
 - LICENSE
 - environment/requirements.txt
-- kernels/softmax/            completed study
+- kernels/softmax/            study #1: how close to peak a softmax gets
     - triton/                 softmax_naive, softmax_rows, softmax_gridstride
     - README.md               finding, failed attempts, how to reproduce
-  (gemm, attention, layernorm, elementwise: planned)
+- kernels/cache-cliff/        study #2: why the cliff sits below cache size
+    - triton/                 reread_1/2/3pass (the multi-pass control), read_only
+    - cliff_sweep.py          read-only vs read-write, locates each cliff
+    - verify_passes.py        checks the re-reads are real (not compiler-removed)
+    - plots/                  regenerates the cliff figure from the CSV
 - benchmarks/
     - peak_bw.py              measure real copy bandwidth
     - bench_softmax.py        correctness + GB/s per shape
